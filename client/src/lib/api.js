@@ -1,21 +1,18 @@
-import axios from 'axios';
-import { useAuth } from '@clerk/nextjs';
+import axios from "axios";
+import { useAuth } from "@clerk/nextjs";
 
-// 1. Create a generic Axios instance
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Point to your Express Server
-});
+// It checks the Environment Variable first. If missing, it falls back to localhost.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-// 2. A Custom Hook to use the API (Because we need the 'useAuth' hook)
 export const useApi = () => {
   const { getToken } = useAuth();
 
-  // Interceptor: Before request is sent...
+  const api = axios.create({
+    baseURL: BASE_URL+'/api',
+  });
+
   api.interceptors.request.use(async (config) => {
-    // ...get the fresh Clerk Token
     const token = await getToken();
-    
-    // ...and attach it to the header
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,5 +21,3 @@ export const useApi = () => {
 
   return api;
 };
-
-export default api;

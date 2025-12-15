@@ -73,6 +73,7 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 
 #### Client (client/.env.local):
 ```bash
+NEXT_PUBLIC_API_URL=http://localhost:5000
 # Clerk Auth Keys (Frontend)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key

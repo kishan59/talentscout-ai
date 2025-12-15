@@ -35,7 +35,7 @@ export default async function Home() {
         
         <p className="text-base sm:text-xl text-gray-400 max-w-lg mx-auto leading-relaxed">
           The Automated Applicant Tracking System. <br className="hidden sm:block"/>
-          Screen 100 resumes in 10 seconds with Gemini 2.5.
+          Screen 100 resumes in 10 seconds with Gemini model.
         </p>
 
         {/* Responsive Buttons (Stack on mobile, Row on desktop) */}

@@ -30,7 +30,7 @@ TalentScout allows recruiters to:
 ### Backend
 * **Runtime:** Node.js + Express.js
 * **Database:** MongoDB Atlas (Mongoose)
-* **AI:** Google Gemini (2.5 Flash Model)
+* **AI:** Google Gemini
 * **Parsing:** pdf-parse (v2)
 
 ---

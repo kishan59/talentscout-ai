@@ -1,97 +1,102 @@
 import { GoogleGenAI } from "@google/genai";
 import { PDFParse } from 'pdf-parse';
 import Candidate from '../models/Candidate.js';
-import Job from '../models/Job.js'; // Import Job model to look up description
+import Job from '../models/Job.js'; 
 
-const cleanJSON = (text) => {
-  return text.replace(/```json/g, '').replace(/```/g, '').trim();
+// Utility to clean AI output (Gemma can be chatty)
+const cleanAIResponse = (text) => {
+  // 1. Remove markdown code blocks if present
+  let clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+  
+  // 2. Find the first '{' and the last '}' to isolate the JSON object
+  const firstOpen = clean.indexOf('{');
+  const lastClose = clean.lastIndexOf('}');
+  
+  if (firstOpen !== -1 && lastClose !== -1) {
+    clean = clean.substring(firstOpen, lastClose + 1);
+  }
+  
+  return clean;
 };
 
 export const analyzeResume = async (req, res) => {
   try {
-    // Check for buffer, not path
+    // Check for buffer
     if (!req.file || !req.file.buffer) {
         return res.status(400).json({ error: "No resume file uploaded" });
     }
     
-    // We expect the Client to send 'jobId' along with the file
     const { jobId } = req.body;
     const { userId } = req.auth;
-    if (!jobId) {
-      return res.status(400).json({ error: "Job ID is required" });
-    }
+    if (!jobId) return res.status(400).json({ error: "Job ID is required" });
 
-    // 2. Fetch the Job Description from DB
+    // 2. Fetch Job Description
     const job = await Job.findOne({ _id: jobId, userId });
-    if (!job) {
-      return res.status(404).json({ error: "Job not found or unauthorized" });
-    }
+    if (!job) return res.status(404).json({ error: "Job not found or unauthorized" });
 
     // Initialize AI
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    // 3. Parse PDF from RAM (Buffer)
+    // 3. Parse PDF from RAM
     let resumeText = "";
-    
-    // Initialize Parser with Buffer
-    const parser = new PDFParse({ data: req.file.buffer }); // <--- 'data' param is required
+    const parser = new PDFParse({ data: req.file.buffer }); 
     
     try {
       const pdfResult = await parser.getText();
       resumeText = pdfResult.text;
     } finally {
-      // Clean up memory immediately
       await parser.destroy(); 
     }
 
     if (!resumeText) return res.status(400).json({ error: "Could not extract text from PDF" });
 
-    // 4. AI Analysis (Using the DB's Job Description)
+    // 4. AI Analysis (Gemma 3 Edition)
+    // Kept your exact logic for Tiers and Skills, added strict JSON enforcement for Gemma
     const prompt = `
       You are an expert ATS. Analyze the following Resume against the provided Job Description.
       
-      JOB TITLE: ${job.title}
-      JOB DESCRIPTION:
-      "${job.description}"
-      
-      RESUME TEXT:
-      "${resumeText.substring(0, 8000)}" 
-      
       CRITICAL INSTRUCTION:
+      Output ONLY a raw JSON object. Do not output markdown, explanations, or "Here is the JSON".
+      
+      JOB TITLE: ${job.title}
+      JOB DESCRIPTION: "${job.description.substring(0, 2000)}"
+      
+      RESUME TEXT: "${resumeText.substring(0, 6000)}" 
+      
+      ANALYSIS RULES:
       1. Tiers: Use ONLY "S", "A", "B", or "F".
       2. Skills: Identify the top 4 most important skills FROM THE JOB DESCRIPTION. 
          Score the candidate on those specific skills (0-100).
-         Example for Sales: { "Negotiation": 90, "Communication": 85, "CRM": 60, "Closing": 70 }
-         Example for Dev: { "React": 90, "Node.js": 80, "System Design": 50, "Testing": 70 }
       
-      Return PURE JSON object (no markdown):
+      REQUIRED JSON STRUCTURE:
       {
         "name": "Candidate Name",
         "email": "candidate@email.com",
         "aiScore": 85,
         "tier": "S", 
-        "summary": "Summary of fit based on the JD.",
-        "keySkills": { "Skill1": 0, "Skill2": 0, "Skill3": 0, "Skill4": 0 },
+        "summary": "1-2 sentence summary of fit.",
+        "keySkills": { "React": 90, "Node.js": 80, "AWS": 50, "Testing": 70 },
         "badges": ["badge1", "badge2"]
       }
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      // 🚀 SWITCHED TO GEMMA 3 (14.4k Daily Requests)
+      model: 'gemma-3-27b-it', 
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
     const textOutput = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-    
     if (!textOutput) throw new Error("AI returned empty response");
 
-    const jsonString = cleanJSON(textOutput);
+    // Robust Cleaning for Gemma
+    const jsonString = cleanAIResponse(textOutput);
     const candidateData = JSON.parse(jsonString);
 
-    // 5. Save to DB (Linked to Job)
+    // 5. Save to DB
     const newCandidate = new Candidate({
       ...candidateData,
-      jobId: job._id, // Link the candidate to this specific job
+      jobId: job._id, 
       originalResumeText: resumeText
     });
     
@@ -109,37 +114,38 @@ export const generateEmail = async (req, res) => {
   try {
     const { candidateId, jobId } = req.body;
     
-    // Security: Validate ownership
     const job = await Job.findOne({ _id: jobId, userId: req.auth.userId });
     if (!job) return res.status(404).json({ error: "Unauthorized" });
 
     const candidate = await Candidate.findById(candidateId);
     
-    // Initialize AI
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
-    // The "Copywriter" Prompt
+    // Gemma Email Prompt
     const prompt = `
       You are an expert technical recruiter. Write a short, exciting interview invitation email.
+      Output strictly raw JSON.
       
       CANDIDATE: ${candidate.name}
       ROLE: ${job.title}
       KEY STRENGTH: ${candidate.summary}
       
-      Output strictly JSON:
+      JSON Structure:
       {
         "subject": "Email Subject Line",
-        "body": "Email Body Text (Plain text, no HTML, keep it casual but professional)"
+        "body": "Email Body Text (Plain text, no HTML)"
       }
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      // 🚀 SWITCHED TO GEMMA 3
+      model: 'gemma-3-27b-it',
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
     const textOutput = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-    const emailDraft = JSON.parse(textOutput.replace(/```json/g, '').replace(/```/g, '').trim());
+    const jsonString = cleanAIResponse(textOutput);
+    const emailDraft = JSON.parse(jsonString);
 
     res.status(200).json(emailDraft);
 
@@ -149,9 +155,10 @@ export const generateEmail = async (req, res) => {
   }
 };
 
+// --- NO CHANGES BELOW THIS LINE (Kept your logic exactly as is) ---
+
 export const updateStatus = async (req, res) => {
   try {
-    // 1. Accept 'emailBody' from the request
     const { candidateId, status, emailBody } = req.body; 
     const { userId } = req.auth;
 
@@ -161,7 +168,6 @@ export const updateStatus = async (req, res) => {
     const job = await Job.findOne({ _id: candidate.jobId, userId });
     if (!job) return res.status(403).json({ error: "Unauthorized" });
 
-    // 2. Update Status AND Email Body (if provided)
     candidate.status = status;
     if (emailBody) {
         candidate.emailBody = emailBody;
@@ -180,15 +186,12 @@ export const deleteCandidate = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.auth;
 
-    // 1. Find Candidate
     const candidate = await Candidate.findById(id);
     if (!candidate) return res.status(404).json({ error: "Candidate not found" });
 
-    // 2. Security Check: Ensure User owns the Job this candidate belongs to
     const job = await Job.findOne({ _id: candidate.jobId, userId });
     if (!job) return res.status(403).json({ error: "Unauthorized access to this candidate" });
 
-    // 3. Destroy
     await candidate.deleteOne();
 
     res.status(200).json({ message: "Candidate deleted successfully" });

@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* 1. Define the Cyberpunk Theme directly here */
+@theme {
+  /* The Dark Backgrounds */
+  --color-cyber-black: #050505;
+  --color-cyber-dark: #0a0a0a;
+  --color-cyber-gray: #121212;
+
+  /* The Neon Palette */
+  --color-neon-blue: #00f3ff;
+  --color-neon-purple: #bd00ff;
+  --color-neon-green: #00ff9f;
+  --color-neon-yellow: #fcee0a;
+  --color-neon-red: #ff003c;
+
+  /* The Glow Effects (Shadows) */
+  --shadow-neon-blue: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(0, 243, 255, 0.3);
+  --shadow-neon-purple: 0 0 10px rgba(189, 0, 255, 0.5), 0 0 20px rgba(189, 0, 255, 0.3);
+  --shadow-neon-green: 0 0 10px rgba(0, 255, 159, 0.5), 0 0 20px rgba(0, 255, 159, 0.3);
+}
+
+/* 2. Global Styles & Glassmorphism Utilities */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-cyber-black text-white overflow-x-hidden;
+}
+
+/* Custom Utility Classes using @apply */
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl;
+  }
+  
+  .glass-card {
+    @apply bg-cyber-gray/80 backdrop-blur-md border border-white/5 hover:border-neon-blue/50 transition-all duration-300;
+  }
+  
+  /* The "Scanline" CRT Effect */
+  .scanlines {
+    background: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0),
+      rgba(255,255,255,0) 50%,
+      rgba(0,0,0,0.1) 50%,
+      rgba(0,0,0,0.1)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+}

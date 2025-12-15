@@ -2,8 +2,6 @@
 
 > **A Next.js & Express application that leverages Google Gemini AI to automate resume screening, ranking, and candidate communication.**
 
-![Project Banner](https://via.placeholder.com/1000x500?text=TalentScout+UI+Screenshot+Here)
-*(Replace this link with a real screenshot of your Dashboard later!)*
 
 ## 💡 The Problem
 Recruiters spend seconds scanning resumes. Good candidates get lost in the pile, and manual data entry is slow. ATS systems are often clunky and expensive.
@@ -32,7 +30,7 @@ TalentScout allows recruiters to:
 ### Backend
 * **Runtime:** Node.js + Express.js
 * **Database:** MongoDB Atlas (Mongoose)
-* **AI:** Google Gemini (1.5 Flash Model)
+* **AI:** Google Gemini (2.5 Flash Model)
 * **Parsing:** pdf-parse (v2)
 
 ---
@@ -41,5 +39,5 @@ TalentScout allows recruiters to:
 
 ### 1. Clone the Repo
 ```bash
-git clone [https://github.com/YOUR_USERNAME/talentscout-ai.git](https://github.com/YOUR_USERNAME/talentscout-ai.git)
+git clone [https://github.com/kishan59/talentscout-ai.git](https://github.com/kishan59/talentscout-ai.git)
 cd talentscout-ai

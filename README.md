@@ -39,7 +39,7 @@ TalentScout allows recruiters to:
 
 ### 1. Clone the Repo
 ```bash
-git clone [https://github.com/kishan59/talentscout-ai.git](https://github.com/kishan59/talentscout-ai.git)
+git clone https://github.com/kishan59/talentscout-ai.git
 cd talentscout-ai
 ```
 

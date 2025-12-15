@@ -91,14 +91,15 @@ Open two separate terminals to run the frontend and backend simultaneously.
 ```bash
 cd server
 npm start
-The server will start on port 5000.
 ```
+The server will start on port 5000.
 
 #### Terminal 2 (Frontend):
 
 ```bash
 cd client
 npm run dev
-The frontend will start on port 3000.
 ```
-Visit http://localhost:3000 to start hiring!
+The frontend will start on port 3000.
+
+#### Visit http://localhost:3000 to start hiring!

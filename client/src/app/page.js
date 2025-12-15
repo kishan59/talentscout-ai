@@ -24,7 +24,7 @@ export default async function Home() {
 
       <div className="z-10 text-center space-y-6 md:space-y-8 max-w-4xl mx-auto">
         <div className="inline-block px-4 py-1 rounded-full border border-neon-blue/30 bg-neon-blue/10 text-neon-blue text-xs md:text-sm mb-4 animate-pulse">
-          SYSTEM ONLINE v2.5
+          SYSTEM ONLINE
         </div>
         
         {/* Responsive Text Sizes */}
@@ -47,7 +47,7 @@ export default async function Home() {
           </Link>
           
           <a 
-            href="https://github.com/yourusername" 
+            href="https://github.com/kishan59/talentscout-ai" 
             target="_blank" 
             className="w-full sm:w-auto px-8 py-4 border border-white/20 rounded-lg hover:bg-white/10 transition-all text-gray-300 flex justify-center"
           >

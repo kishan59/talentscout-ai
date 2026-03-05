@@ -93,6 +93,20 @@ export const analyzeResume = async (req, res) => {
     const jsonString = cleanAIResponse(textOutput);
     const candidateData = JSON.parse(jsonString);
 
+    if (candidateData.keySkills) {
+      const sanitizedSkills = {};
+      for (const [key, value] of Object.entries(candidateData.keySkills)) {
+        // Replace periods with spaces (e.g., "Node.js" -> "Node js")
+        const safeKey = key.replace(/\./g, ' '); 
+        sanitizedSkills[safeKey] = value;
+      }
+      candidateData.keySkills = sanitizedSkills;
+    }
+
+    if (!candidateData.email || candidateData.email.toLowerCase() === "not provided") {
+      candidateData.email = "no-email@candidate.com"; // Safe fallback
+    }
+
     // 5. Save to DB
     const newCandidate = new Candidate({
       ...candidateData,
@@ -155,7 +169,6 @@ export const generateEmail = async (req, res) => {
   }
 };
 
-// --- NO CHANGES BELOW THIS LINE (Kept your logic exactly as is) ---
 
 export const updateStatus = async (req, res) => {
   try {

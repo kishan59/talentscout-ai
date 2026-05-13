@@ -50,7 +50,7 @@ export const analyzeResume = async (req, res) => {
 
     if (!resumeText) return res.status(400).json({ error: "Could not extract text from PDF" });
 
-    // 4. AI Analysis (Gemma 3 Edition)
+    // 4. AI Analysis (Gemma 4 Edition)
     // Kept your exact logic for Tiers and Skills, added strict JSON enforcement for Gemma
     const prompt = `
       You are an expert ATS. Analyze the following Resume against the provided Job Description.
@@ -81,8 +81,8 @@ export const analyzeResume = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      // 🚀 SWITCHED TO GEMMA 3 (14.4k Daily Requests)
-      model: 'gemma-3-27b-it', 
+      // 🚀 SWITCHED TO GEMMA 4
+      model: 'gemma-4-31b-it', 
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
@@ -152,8 +152,8 @@ export const generateEmail = async (req, res) => {
     `;
 
     const response = await ai.models.generateContent({
-      // 🚀 SWITCHED TO GEMMA 3
-      model: 'gemma-3-27b-it',
+      // 🚀 SWITCHED TO GEMMA 4
+      model: 'gemma-4-31b-it',
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
